@@ -2,20 +2,19 @@ package ru.astondevs.kafkastartermvn;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.core.ProducerFactory;
-import ru.astondevs.kafkastartermvn.properties.KafkaProperties;
+import org.springframework.kafka.core.*;
+import ru.astondevs.kafkastartermvn.properties.KafkaTopicProperties;
+import ru.astondevs.kafkastartermvn.recieve.ConsumerFactoryBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,20 +22,19 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Configuration
 @ComponentScan(basePackageClasses = KafkaAutoConfiguration.class)
-@EnableConfigurationProperties(KafkaProperties.class)
+@EnableConfigurationProperties(KafkaTopicProperties.class)
+@AutoConfigureAfter(KafkaProperties.class)
 public class KafkaAutoConfiguration {
 
-    private final KafkaProperties properties;
+    private final KafkaTopicProperties properties;
+    private final ConsumerFactoryBuilder builder;
+
 
     @Bean
     @ConditionalOnMissingBean
-    public Consumer<String, String> consumerFactory() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, properties.getBootstrapServers());
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, properties.getGroupId());
-        return new KafkaConsumer<>(props);
+    public Consumer<?, ?> consumerFactory() {
+        ConsumerFactory<?, ?> consumerFactory = builder.buildConsumerFactory();
+        return consumerFactory.createConsumer();
     }
 
     @Bean

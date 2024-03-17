@@ -5,10 +5,10 @@ import lombok.RequiredArgsConstructor;
 import java.util.Collection;
 
 @RequiredArgsConstructor
-public class KafkaListenerDefaultStrategy implements Listener<String>{
-    private final Listener<String> listener;
+public class KafkaListenerDefaultStrategy<T> implements Listener<T>{
+    private final Listener<T> listener;
     @Override
-    public void receive(Collection<String> data) {
+    public void receive(Collection<T> data) {
         listener.receive(data);
     }
 }
